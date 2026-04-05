@@ -342,7 +342,7 @@ document.querySelectorAll('.cluster-carousel').forEach(makeClusterCarousel);
   const notePh   = document.getElementById('lolaNotePlaceholder');
   if (!btn || !modal) return;
 
-  const CORRECT = ['yellow', 'purple'];
+  const CORRECT = 'yellow';
 
   if (noteImg) {
     noteImg.addEventListener('load',  () => { if (notePh) notePh.style.display = 'none'; });
