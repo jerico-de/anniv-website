@@ -342,7 +342,7 @@ document.querySelectorAll('.cluster-carousel').forEach(makeClusterCarousel);
   const notePh   = document.getElementById('lolaNotePlaceholder');
   if (!btn || !modal) return;
 
-  const CORRECT = 'yellow';
+  const CORRECT = ['yellow', 'purple'];
 
   if (noteImg) {
     noteImg.addEventListener('load',  () => { if (notePh) notePh.style.display = 'none'; });
@@ -361,7 +361,7 @@ document.querySelectorAll('.cluster-carousel').forEach(makeClusterCarousel);
 
   function checkAnswer() {
     const val = (input ? input.value : '').trim().toLowerCase();
-    if (val === CORRECT) {
+    if (CORRECT.some(color => val.includes(color))) {
       if (input)  input.disabled  = true;
       if (submit) submit.disabled = true;
       setTimeout(() => {
