@@ -1062,7 +1062,6 @@ document.querySelectorAll('.flip-envelope').forEach(env => {
     { img: 'assets/letter-1.jpg', alt: 'Letter page 1', tapes: true },
     { img: 'assets/letter-2.jpg', alt: 'Letter page 2', tapes: false },
     { img: 'assets/letter-3.jpg', alt: 'Letter page 3', tapes: false },
-    { img: null, blank: true },
   ];
 
   /* Replace book HTML with slide-based structure */
@@ -1137,6 +1136,555 @@ document.querySelectorAll('.flip-envelope').forEach(env => {
       s.style.position = 'absolute';
       s.style.inset = '0';
       s.style.opacity = '0';
+    }
+  });
+
+  if (prevBtn) prevBtn.addEventListener('click', () => goTo(cur - 1));
+  if (nextBtn) nextBtn.addEventListener('click', () => goTo(cur + 1));
+
+  if (counter) counter.textContent = `Page 1 of ${TOTAL}`;
+  if (prevBtn) prevBtn.disabled = true;
+  if (nextBtn) nextBtn.disabled = TOTAL <= 1;
+})();
+
+/* ════════════════════════════════════════
+   SCRIPT PATCH — Jigs & Shan Anniversary
+   Functional additions only — no content changes
+════════════════════════════════════════ */
+
+/* ════════════════════════════════════════
+   HOW WE MET — Lightbox on image click
+   Opens the lightbox when clicking any
+   mini-photo inside the How We Met section.
+════════════════════════════════════════ */
+(function () {
+  const howWeMet = document.getElementById('howWeMet');
+  if (!howWeMet) return;
+
+  /* Wait for main lightbox to be ready */
+  function attachHowWeMetLightbox() {
+    if (!window.openImgLightbox) {
+      setTimeout(attachHowWeMetLightbox, 200);
+      return;
+    }
+
+    howWeMet.addEventListener('click', function (e) {
+      const img = e.target.closest('.mini-photo img') || (e.target.tagName === 'IMG' && e.target.closest('.mini-placeholder') ? e.target : null);
+      if (!img) return;
+      if (!img.src || img.src.endsWith('#') || img.src === window.location.href) return;
+
+      /* Collect all images in this chapter's carousel for gallery navigation */
+      const carousel = img.closest('.cluster-carousel');
+      const allImgs = carousel
+        ? Array.from(carousel.querySelectorAll('.mini-photo img[src]')).filter(i => i.src && !i.src.endsWith('#') && i.src !== window.location.href)
+        : [img];
+      const idx = allImgs.indexOf(img);
+
+      const caption = '';
+      window.openImgLightbox(img.src, caption, allImgs, idx);
+      e.stopPropagation();
+    }, true);
+  }
+
+  attachHowWeMetLightbox();
+})();
+
+
+
+/* ════════════════════════════════════════
+   THE QUESTION — Auto-size text track
+   Make the text panel container match the
+   tallest panel so cards don't jump height.
+════════════════════════════════════════ */
+(function () {
+  function sizeTextTrack() {
+    const track = document.getElementById('askTextTrack');
+    if (!track) return;
+    const panels = track.querySelectorAll('.ask-text-panel');
+    if (!panels.length) return;
+
+    /* Temporarily make all panels static to measure */
+    panels.forEach(p => {
+      p.style.position = 'static';
+      p.style.opacity  = '1';
+      p.style.transform = 'none';
+      p.style.display   = 'flex';
+    });
+
+    let max = 0;
+    panels.forEach(p => { max = Math.max(max, p.offsetHeight); });
+
+    /* Restore */
+    panels.forEach(p => {
+      p.style.position  = '';
+      p.style.opacity   = '';
+      p.style.transform = '';
+      p.style.display   = '';
+    });
+
+    if (max > 0) track.style.minHeight = (max + 16) + 'px';
+  }
+
+  /* Run after images load */
+  const imgs = document.querySelectorAll('.ask-photo-slide img');
+  let loaded = 0;
+  const run = () => { loaded++; if (loaded >= imgs.length) sizeTextTrack(); };
+  if (!imgs.length) { setTimeout(sizeTextTrack, 100); }
+  else {
+    imgs.forEach(img => {
+      if (img.complete) run();
+      else { img.addEventListener('load', run); img.addEventListener('error', run); }
+    });
+    setTimeout(sizeTextTrack, 800);
+  }
+  window.addEventListener('resize', sizeTextTrack);
+})();
+
+
+/* ════════════════════════════════════════
+   MY NOTE LETTER — Single-page slide viewer
+   Replace the page-turn book with a simple
+   one-page-at-a-time slide transition.
+════════════════════════════════════════ */
+(function () {
+  const wrap = document.getElementById('noteLetterWrap');
+  if (!wrap) return;
+
+  const book = document.getElementById('letterBook');
+  if (!book) return;
+
+  const pages = [
+    { img: 'assets/letter-1.jpg', alt: 'Letter page 1', tapes: true },
+    { img: 'assets/letter-2.jpg', alt: 'Letter page 2', tapes: false },
+    { img: 'assets/letter-3.jpg', alt: 'Letter page 3', tapes: false },
+  ];
+
+  const viewport = document.createElement('div');
+  viewport.className = 'letter-pages-viewport';
+  viewport.style.position = 'relative';
+  viewport.style.minHeight = '200px';
+
+  pages.forEach((p, i) => {
+    const slide = document.createElement('div');
+    slide.className = 'letter-page-slide' + (i === 0 ? ' active' : '');
+    slide.dataset.pageIdx = i;
+
+    const tapesHtml = p.tapes
+      ? `<div class="letter-page-frame-tape letter-tape-tl"></div>
+         <div class="letter-page-frame-tape letter-tape-tr"></div>` : '';
+
+    slide.innerHTML = `<div class="letter-page-frame">
+      ${tapesHtml}
+      <img src="${p.img}" alt="${p.alt}" draggable="false">
+    </div>`;
+
+    viewport.appendChild(slide);
+  });
+
+  book.parentNode.replaceChild(viewport, book);
+
+  const prevBtn = document.getElementById('letterPrev');
+  const nextBtn = document.getElementById('letterNext');
+  const counter = document.getElementById('letterCounter');
+  const slides  = viewport.querySelectorAll('.letter-page-slide');
+  const TOTAL   = slides.length;
+  let cur = 0;
+
+  function goTo(newIdx) {
+    if (newIdx < 0 || newIdx >= TOTAL || newIdx === cur) return;
+    const dir = newIdx > cur ? 1 : -1;
+
+    slides[cur].classList.remove('active');
+    slides[cur].style.transform = dir > 0 ? 'translateX(-40px)' : 'translateX(40px)';
+    slides[cur].style.opacity   = '0';
+    slides[cur].style.position  = 'absolute';
+    slides[cur].style.inset     = '0';
+
+    cur = newIdx;
+    slides[cur].style.transform = dir > 0 ? 'translateX(40px)' : 'translateX(-40px)';
+    slides[cur].style.opacity   = '0';
+    slides[cur].style.position  = 'relative';
+    slides[cur].style.inset     = '';
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        slides[cur].style.transition = 'opacity .45s ease, transform .45s cubic-bezier(.22,1,.36,1)';
+        slides[cur].style.transform  = 'translateX(0)';
+        slides[cur].style.opacity    = '1';
+        slides[cur].classList.add('active');
+      });
+    });
+
+    if (counter) counter.textContent = `Page ${cur + 1} of ${TOTAL}`;
+    if (prevBtn) prevBtn.disabled = cur <= 0;
+    if (nextBtn) nextBtn.disabled = cur >= TOTAL - 1;
+  }
+
+  /* Init non-active slides */
+  slides.forEach((s, i) => {
+    if (i !== 0) {
+      s.style.position = 'absolute';
+      s.style.inset    = '0';
+      s.style.opacity  = '0';
+    }
+  });
+
+  if (prevBtn) prevBtn.addEventListener('click', () => goTo(cur - 1));
+  if (nextBtn) nextBtn.addEventListener('click', () => goTo(cur + 1));
+
+  if (counter) counter.textContent = `Page 1 of ${TOTAL}`;
+  if (prevBtn) prevBtn.disabled = true;
+  if (nextBtn) nextBtn.disabled = TOTAL <= 1;
+})();
+
+/* ════════════════════════════════════════
+   SCRIPT PATCH — Jigs & Shan Anniversary
+   Functional additions only — no content changes
+════════════════════════════════════════ */
+
+/* ════════════════════════════════════════
+   AMBIENT BACKGROUND — Falling petals + stars
+   Very subtle: low opacity, slow movement,
+   pauses when tab is hidden to save CPU.
+════════════════════════════════════════ */
+(function () {
+  /* ── Canvas setup ── */
+  const canvas = document.createElement('canvas');
+  canvas.id = 'ambientCanvas';
+  document.body.insertBefore(canvas, document.body.firstChild);
+  const ctx = canvas.getContext('2d');
+
+  let W, H, dpr;
+  function resize() {
+    dpr    = Math.min(window.devicePixelRatio || 1, 2);
+    W      = window.innerWidth;
+    H      = window.innerHeight;
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width  = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.scale(dpr, dpr);
+  }
+  resize();
+  window.addEventListener('resize', () => { resize(); });
+
+  /* ── Colour palette — drawn from site variables ── */
+  const GOLD  = 'rgba(201,168,76,';
+  const CREAM = 'rgba(253,246,238,';
+  const ROSE  = 'rgba(212,128,138,';
+
+  /* ══════════════════════════════════════
+     STARS — twinkling dots in three sizes:
+     tiny background field + mid sparkles +
+     a handful of bright accent stars
+  ══════════════════════════════════════ */
+
+  function makeStar() {
+    const tier = Math.random();
+    return {
+      x:     Math.random(),
+      y:     Math.random(),
+      /* three size tiers */
+      r:     tier < 0.6
+               ? Math.random() * 0.6 + 0.2          // tiny  (60%)
+               : tier < 0.88
+                 ? Math.random() * 0.9 + 0.7         // mid   (28%)
+                 : Math.random() * 1.1 + 1.4,        // bright (12%)
+      /* each star has its own rhythm */
+      speed: Math.random() * 0.006 + 0.002,
+      phase: Math.random() * Math.PI * 2,
+      /* occasional rose-tinted stars */
+      color: Math.random() < 0.12 ? ROSE
+           : Math.random() < 0.5  ? GOLD
+           : CREAM,
+      /* base opacity band — dimmer for tiny, brighter for large */
+      minA:  tier < 0.6 ? 0.04 : tier < 0.88 ? 0.08 : 0.18,
+      maxA:  tier < 0.6 ? 0.28 : tier < 0.88 ? 0.50 : 0.80,
+    };
+  }
+
+  const STAR_COUNT = 220;
+  const stars = Array.from({ length: STAR_COUNT }, makeStar);
+
+  /* ── Draw a star; brightest ones get a soft glow halo ── */
+  function drawStar(s, t) {
+    const x = s.x * W;
+    const y = s.y * H;
+    const progress = Math.sin(t * s.speed * 60 + s.phase) * 0.5 + 0.5;
+    const a = s.minA + progress * (s.maxA - s.minA);
+
+    /* Glow for larger stars */
+    if (s.r > 1.4) {
+      const grad = ctx.createRadialGradient(x, y, 0, x, y, s.r * 3.5);
+      grad.addColorStop(0,   s.color + (a * 0.7) + ')');
+      grad.addColorStop(1,   s.color + '0)');
+      ctx.beginPath();
+      ctx.arc(x, y, s.r * 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+
+    /* Core dot */
+    ctx.beginPath();
+    ctx.arc(x, y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = s.color + a + ')';
+    ctx.fill();
+  }
+
+  /* ── Animation loop ── */
+  let lastT = 0;
+  let paused = false;
+  let rafId;
+
+  document.addEventListener('visibilitychange', () => {
+    paused = document.hidden;
+    if (!paused && !rafId) loop(lastT);
+  });
+
+  function loop(t) {
+    if (paused) { rafId = null; return; }
+    rafId = requestAnimationFrame(loop);
+    lastT = t;
+
+    ctx.clearRect(0, 0, W, H);
+    stars.forEach(s => drawStar(s, t * 0.001));
+  }
+
+  requestAnimationFrame(loop);
+})();
+
+/* ════════════════════════════════════════
+   HOW WE MET — Lightbox on image click
+   Opens the lightbox when clicking any
+   mini-photo inside the How We Met section.
+════════════════════════════════════════ */
+(function () {
+  const howWeMet = document.getElementById('howWeMet');
+  if (!howWeMet) return;
+
+  /* Wait for main lightbox to be ready */
+  function attachHowWeMetLightbox() {
+    if (!window.openImgLightbox) {
+      setTimeout(attachHowWeMetLightbox, 200);
+      return;
+    }
+
+    howWeMet.addEventListener('click', function (e) {
+      const img = e.target.closest('.mini-photo img') || (e.target.tagName === 'IMG' && e.target.closest('.mini-placeholder') ? e.target : null);
+      if (!img) return;
+      if (!img.src || img.src.endsWith('#') || img.src === window.location.href) return;
+
+      /* Collect all images in this chapter's carousel for gallery navigation */
+      const carousel = img.closest('.cluster-carousel');
+      const allImgs = carousel
+        ? Array.from(carousel.querySelectorAll('.mini-photo img[src]')).filter(i => i.src && !i.src.endsWith('#') && i.src !== window.location.href)
+        : [img];
+      const idx = allImgs.indexOf(img);
+
+      const caption = '';
+      window.openImgLightbox(img.src, caption, allImgs, idx);
+      e.stopPropagation();
+    }, true);
+  }
+
+  attachHowWeMetLightbox();
+})();
+
+
+/* ════════════════════════════════════════
+   LOLA QUIZ — Accept yellow OR purple
+   (Belt-and-suspenders: patch the answer
+    check in case the modal was already set up)
+════════════════════════════════════════ */
+(function () {
+  const modal    = document.getElementById('lolaModal');
+  const step1    = document.getElementById('lolaStep1');
+  const step2    = document.getElementById('lolaStep2');
+  const wrongMsg = document.getElementById('lolaWrongMsg');
+  const input    = document.getElementById('lolaTypeInput');
+  const submit   = document.getElementById('lolaTypeSubmit');
+  const noteImg  = document.getElementById('lolaNoteFallback');
+  const notePh   = document.getElementById('lolaNotePlaceholder');
+  if (!modal || !input || !submit) return;
+
+  const CORRECT = ['yellow', 'purple'];
+
+  /* Handle the note image */
+  if (noteImg) {
+    noteImg.addEventListener('load',  () => { if (notePh) notePh.style.display = 'none'; });
+    noteImg.addEventListener('error', () => { noteImg.style.display = 'none'; });
+  }
+
+  function checkAnswer() {
+    const val = input.value.trim().toLowerCase();
+    if (CORRECT.some(color => val.includes(color))) {
+      input.disabled  = true;
+      submit.disabled = true;
+      setTimeout(() => {
+        step1.classList.add('lola-step-hidden');
+        step2.classList.remove('lola-step-hidden');
+      }, 350);
+    } else {
+      wrongMsg.classList.add('show');
+      input.style.borderColor = 'var(--rose-dark)';
+      input.animate([
+        { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' },
+        { transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' },
+        { transform: 'translateX(0)' }
+      ], { duration: 380 });
+      setTimeout(() => {
+        wrongMsg.classList.remove('show');
+        input.style.borderColor = '';
+      }, 1400);
+    }
+  }
+
+  /* Remove old listeners by cloning nodes */
+  const newSubmit = submit.cloneNode(true);
+  submit.parentNode.replaceChild(newSubmit, submit);
+  const newInput = input.cloneNode(true);
+  input.parentNode.replaceChild(newInput, input);
+
+  newSubmit.addEventListener('click', checkAnswer);
+  newInput.addEventListener('keydown', e => { if (e.key === 'Enter') checkAnswer(); });
+})();
+
+
+/* ════════════════════════════════════════
+   THE QUESTION — Auto-size text track
+   Make the text panel container match the
+   tallest panel so cards don't jump height.
+════════════════════════════════════════ */
+(function () {
+  function sizeTextTrack() {
+    const track = document.getElementById('askTextTrack');
+    if (!track) return;
+    const panels = track.querySelectorAll('.ask-text-panel');
+    if (!panels.length) return;
+
+    /* Temporarily make all panels static to measure */
+    panels.forEach(p => {
+      p.style.position = 'static';
+      p.style.opacity  = '1';
+      p.style.transform = 'none';
+      p.style.display   = 'flex';
+    });
+
+    let max = 0;
+    panels.forEach(p => { max = Math.max(max, p.offsetHeight); });
+
+    /* Restore */
+    panels.forEach(p => {
+      p.style.position  = '';
+      p.style.opacity   = '';
+      p.style.transform = '';
+      p.style.display   = '';
+    });
+
+    if (max > 0) track.style.minHeight = (max + 16) + 'px';
+  }
+
+  /* Run after images load */
+  const imgs = document.querySelectorAll('.ask-photo-slide img');
+  let loaded = 0;
+  const run = () => { loaded++; if (loaded >= imgs.length) sizeTextTrack(); };
+  if (!imgs.length) { setTimeout(sizeTextTrack, 100); }
+  else {
+    imgs.forEach(img => {
+      if (img.complete) run();
+      else { img.addEventListener('load', run); img.addEventListener('error', run); }
+    });
+    setTimeout(sizeTextTrack, 800);
+  }
+  window.addEventListener('resize', sizeTextTrack);
+})();
+
+
+/* ════════════════════════════════════════
+   MY NOTE LETTER — Single-page slide viewer
+   Replace the page-turn book with a simple
+   one-page-at-a-time slide transition.
+════════════════════════════════════════ */
+(function () {
+  const wrap = document.getElementById('noteLetterWrap');
+  if (!wrap) return;
+
+  const book = document.getElementById('letterBook');
+  if (!book) return;
+
+  const pages = [
+    { img: 'assets/letter-1.jpg', alt: 'Letter page 1', tapes: true },
+    { img: 'assets/letter-2.jpg', alt: 'Letter page 2', tapes: false },
+    { img: 'assets/letter-3.jpg', alt: 'Letter page 3', tapes: false },
+  ];
+
+  const viewport = document.createElement('div');
+  viewport.className = 'letter-pages-viewport';
+  viewport.style.position = 'relative';
+  viewport.style.minHeight = '200px';
+
+  pages.forEach((p, i) => {
+    const slide = document.createElement('div');
+    slide.className = 'letter-page-slide' + (i === 0 ? ' active' : '');
+    slide.dataset.pageIdx = i;
+
+    const tapesHtml = p.tapes
+      ? `<div class="letter-page-frame-tape letter-tape-tl"></div>
+         <div class="letter-page-frame-tape letter-tape-tr"></div>` : '';
+
+    slide.innerHTML = `<div class="letter-page-frame">
+      ${tapesHtml}
+      <img src="${p.img}" alt="${p.alt}" draggable="false">
+    </div>`;
+
+    viewport.appendChild(slide);
+  });
+
+  book.parentNode.replaceChild(viewport, book);
+
+  const prevBtn = document.getElementById('letterPrev');
+  const nextBtn = document.getElementById('letterNext');
+  const counter = document.getElementById('letterCounter');
+  const slides  = viewport.querySelectorAll('.letter-page-slide');
+  const TOTAL   = slides.length;
+  let cur = 0;
+
+  function goTo(newIdx) {
+    if (newIdx < 0 || newIdx >= TOTAL || newIdx === cur) return;
+    const dir = newIdx > cur ? 1 : -1;
+
+    slides[cur].classList.remove('active');
+    slides[cur].style.transform = dir > 0 ? 'translateX(-40px)' : 'translateX(40px)';
+    slides[cur].style.opacity   = '0';
+    slides[cur].style.position  = 'absolute';
+    slides[cur].style.inset     = '0';
+
+    cur = newIdx;
+    slides[cur].style.transform = dir > 0 ? 'translateX(40px)' : 'translateX(-40px)';
+    slides[cur].style.opacity   = '0';
+    slides[cur].style.position  = 'relative';
+    slides[cur].style.inset     = '';
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        slides[cur].style.transition = 'opacity .45s ease, transform .45s cubic-bezier(.22,1,.36,1)';
+        slides[cur].style.transform  = 'translateX(0)';
+        slides[cur].style.opacity    = '1';
+        slides[cur].classList.add('active');
+      });
+    });
+
+    if (counter) counter.textContent = `Page ${cur + 1} of ${TOTAL}`;
+    if (prevBtn) prevBtn.disabled = cur <= 0;
+    if (nextBtn) nextBtn.disabled = cur >= TOTAL - 1;
+  }
+
+  /* Init non-active slides */
+  slides.forEach((s, i) => {
+    if (i !== 0) {
+      s.style.position = 'absolute';
+      s.style.inset    = '0';
+      s.style.opacity  = '0';
     }
   });
 
