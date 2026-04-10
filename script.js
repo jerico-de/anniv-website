@@ -1491,65 +1491,7 @@ document.querySelectorAll('.flip-envelope').forEach(env => {
 })();
 
 
-/* ════════════════════════════════════════
-   LOLA QUIZ — Accept yellow OR purple
-   (Belt-and-suspenders: patch the answer
-    check in case the modal was already set up)
-════════════════════════════════════════ */
-(function () {
-  const modal    = document.getElementById('lolaModal');
-  const step1    = document.getElementById('lolaStep1');
-  const step2    = document.getElementById('lolaStep2');
-  const wrongMsg = document.getElementById('lolaWrongMsg');
-  const input    = document.getElementById('lolaTypeInput');
-  const submit   = document.getElementById('lolaTypeSubmit');
-  const noteImg  = document.getElementById('lolaNoteFallback');
-  const notePh   = document.getElementById('lolaNotePlaceholder');
-  if (!modal || !input || !submit) return;
-
-  const CORRECT = ['yellow', 'purple'];
-
-  /* Handle the note image */
-  if (noteImg) {
-    noteImg.addEventListener('load',  () => { if (notePh) notePh.style.display = 'none'; });
-    noteImg.addEventListener('error', () => { noteImg.style.display = 'none'; });
-  }
-
-  function checkAnswer() {
-    const val = input.value.trim().toLowerCase();
-    if (CORRECT.some(color => val.includes(color))) {
-      input.disabled  = true;
-      submit.disabled = true;
-      setTimeout(() => {
-        step1.classList.add('lola-step-hidden');
-        step2.classList.remove('lola-step-hidden');
-      }, 350);
-    } else {
-      wrongMsg.classList.add('show');
-      input.style.borderColor = 'var(--rose-dark)';
-      input.animate([
-        { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' },
-        { transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' },
-        { transform: 'translateX(0)' }
-      ], { duration: 380 });
-      setTimeout(() => {
-        wrongMsg.classList.remove('show');
-        input.style.borderColor = '';
-      }, 1400);
-    }
-  }
-
-  /* Remove old listeners by cloning nodes */
-  const newSubmit = submit.cloneNode(true);
-  submit.parentNode.replaceChild(newSubmit, submit);
-  const newInput = input.cloneNode(true);
-  input.parentNode.replaceChild(newInput, input);
-
-  newSubmit.addEventListener('click', checkAnswer);
-  newInput.addEventListener('keydown', e => { if (e.key === 'Enter') checkAnswer(); });
-})();
-
-
+  
 /* ════════════════════════════════════════
    THE QUESTION — Auto-size text track
    Make the text panel container match the

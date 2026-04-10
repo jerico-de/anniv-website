@@ -11,6 +11,17 @@ html{scroll-behavior:smooth;}
 section[id]{scroll-margin-top:52px;}
 body{background:var(--bg);color:var(--ink);font-family:'Lora',Georgia,serif;overflow-x:hidden;}
 
+/* -- Global Resets */
+body { overflow-x: hidden; }
+*, *::before, *::after { box-sizing: border-box; }
+ 
+.scrapbook {
+  padding: 4rem 1rem 6rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  overflow-x: hidden;
+}
+
 /* ══ NAVBAR ══ */
 .navbar{position:fixed;top:0;left:0;right:0;background:#000;z-index:1000;padding:.6rem 0;transition:box-shadow .3s;}
 .navbar.scrolled{box-shadow:0 2px 16px rgba(0,0,0,.6);}
@@ -41,7 +52,14 @@ body{background:var(--bg);color:var(--ink);font-family:'Lora',Georgia,serif;over
 .hero-scroll{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:6px;color:rgba(255,255,255,.45);font-family:'Caveat',cursive;font-size:.92rem;animation:bounce 2.2s ease-in-out infinite;}
 
 /* ══ WASHI ══ */
-.washi{height:22px;width:100%;opacity:.3;}
+.washi{
+  height:22px;
+  width:100%;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  display: block;
+  opacity:.3;
+}
 .washi-rose{background:repeating-linear-gradient(90deg,var(--rose-light) 0px,var(--rose-light) 18px,var(--rose) 18px,var(--rose) 20px,var(--rose-light) 20px,var(--rose-light) 38px);}
 .washi-gold{background:repeating-linear-gradient(90deg,var(--gold-light) 0px,var(--gold-light) 12px,var(--gold) 12px,var(--gold) 14px,var(--gold-light) 14px,var(--gold-light) 26px);}
 
@@ -487,7 +505,7 @@ body{background:var(--bg);color:var(--ink);font-family:'Lora',Georgia,serif;over
 /* Decorative rose */
 .answer-rose-deco{font-size:2rem;opacity:.55;line-height:1;}
 /* The big YES */
-.answer-word{
+.answer-word {
   font-family:'Playfair Display',serif;
   font-size:clamp(4.5rem,9vw,7rem);
   font-style:italic;font-weight:400;
@@ -509,7 +527,7 @@ body{background:var(--bg);color:var(--ink);font-family:'Lora',Georgia,serif;over
   border:1px solid var(--gold-dark);
   padding:.55rem 1.1rem;width:fit-content;gap:3px;
 }
-.answer-seal-top{font-family:'Caveat',cursive;font-size:.8rem;color:var(--gold);letter-spacing:.18em;text-transform:uppercase;}
+
 .answer-seal-date{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--cream);}
 
 @media(max-width:620px){
@@ -1692,12 +1710,11 @@ body{background:var(--bg);color:var(--ink);font-family:'Lora',Georgia,serif;over
 
 /* Seal label — engraved small-caps */
 .answer-seal-top {
-  font-family: 'Cinzel Decorative', 'Playfair Display', serif;
+  font-family:'Playfair Display', serif;
   font-size: .6rem;
   font-weight: 400;
   color: var(--gold);
   letter-spacing: .22em;
-  text-transform: uppercase;
 }
 
 /* Seal date — keep the existing Playfair but slightly larger */
@@ -1990,15 +2007,6 @@ body{background:var(--bg);color:var(--ink);font-family:'Lora',Georgia,serif;over
   backdrop-filter: blur(4px);
 }
 
-/* Seal label — engraved small-caps */
-.answer-seal-top {
-  font-family: 'Cinzel Decorative', 'Playfair Display', serif;
-  font-size: .6rem;
-  font-weight: 400;
-  color: var(--gold);
-  letter-spacing: .22em;
-  text-transform: uppercase;
-}
 
 /* Seal date — keep the existing Playfair but slightly larger */
 .answer-seal-date {
