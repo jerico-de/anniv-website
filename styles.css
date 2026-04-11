@@ -140,7 +140,7 @@ body { overflow-x: hidden; }
 .proj-idle-inner{display:flex;flex-direction:column;align-items:center;gap:1rem;color:rgba(201,168,76,.4);font-family:'Caveat',cursive;font-size:1.1rem;letter-spacing:.1em;animation:idlePulse 3s ease-in-out infinite;}
 .proj-idle-inner svg{opacity:.35;}
 
-.proj-viewport{position:absolute;inset:0;z-index:5;overflow:hidden;}
+.proj-viewport{position:absolute;inset:0;z-index:5;overflow:hidden; }
 
 .proj-scanlines{position:absolute;inset:0;z-index:7;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.04) 0px,rgba(0,0,0,.04) 1px,transparent 1px,transparent 4px);}
 .proj-vignette{position:absolute;inset:0;z-index:7;pointer-events:none;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.55) 100%);}
@@ -2006,7 +2006,6 @@ body { overflow-x: hidden; }
   padding: .22rem .7rem;
   backdrop-filter: blur(4px);
 }
-
 
 /* Seal date — keep the existing Playfair but slightly larger */
 .answer-seal-date {
