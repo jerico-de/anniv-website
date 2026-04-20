@@ -513,10 +513,6 @@ document.querySelectorAll('.folder-tab').forEach(tab => {
   });
 });
 
-
-/* Love notes: now using .flip-envelope — handled below */
-
-
 /* ════════════════════════════════════════
    MY NOTE — Hide placeholder when image loads
 ════════════════════════════════════════ */
@@ -530,11 +526,6 @@ if (noteImg && notePh) {
 
 /* ════════════════════════════════════════
    MUSIC PLAYER
-   Autoplay on first visit (sessionStorage flag).
-   On reload: respects browser autoplay policy.
-   
-   Songs array — edit freely:
-   { title, artist, src, duration }
 ════════════════════════════════════════ */
 (function () {
   const SONGS = [
@@ -636,14 +627,6 @@ if (noteImg && notePh) {
 
   /*
    * AUTOPLAY ON FIRST VISIT ONLY.
-   * sessionStorage resets when the tab is closed — so:
-   *   - First time the page opens in a new tab: tries to autoplay
-   *   - Page reload (same tab): does NOT restart from top
-   *   - New tab: starts fresh (sessionStorage is per-tab)
-   * 
-   * We use a flag to track "has this tab already tried to play".
-   * If yes → skip autoplay on reload.
-   * If no  → attempt autoplay (browsers may block it silently).
    */
   const alreadyPlayed = sessionStorage.getItem(SESSION_KEY);
   if (!alreadyPlayed) {
@@ -654,7 +637,6 @@ if (noteImg && notePh) {
       audio.play()
         .then(() => { setPlaying(true); openPanel(); })
         .catch(() => {
-          /* Browser blocked autoplay — silently wait for user interaction */
         });
     }, 800);
   }
@@ -709,7 +691,7 @@ document.querySelectorAll('.section-header, .cluster-carousel, .chapter-text').f
   if (!el.classList.contains('reveal-hidden')) el.classList.add('reveal-hidden');
   revealObs.observe(el);
 });
-// Plan cards: only animate if not already visible
+
 document.querySelectorAll('.plan-card').forEach(el => {
   el.classList.add('reveal-hidden');
   revealObs.observe(el);
@@ -727,10 +709,8 @@ document.querySelectorAll('.plan-card').forEach(el => {
   const notePh     = document.getElementById('notePlaceholder');
   if (!quizWrap || !letterWrap) return;
 
-  // Accepted answers (case-insensitive, trimmed)
   const CORRECT = ['rewrite the stars'];
 
-  // Handle letter image load/error
   if (noteImg) {
     noteImg.addEventListener('load',  () => { if (notePh) notePh.style.display = 'none'; });
     noteImg.addEventListener('error', () => { noteImg.style.display = 'none'; });
@@ -740,7 +720,6 @@ document.querySelectorAll('.plan-card').forEach(el => {
     const val = (input ? input.value : '').trim().toLowerCase();
     const ok  = CORRECT.some(a => val === a);
     if (ok) {
-      // Correct — hide quiz, show letter
       quizWrap.style.opacity = '0';
       quizWrap.style.transition = 'opacity .4s ease';
       setTimeout(() => {
@@ -779,9 +758,7 @@ window.addEventListener('scroll', () => {
 
 
 /* ════════════════════════════════════════
-   FLIP ENVELOPES — card flip on click
-   No grid movement. Fixed height. Click once
-   to reveal the letter, click again to flip back.
+   FLIP ENVELOPES
 ════════════════════════════════════════ */
 document.querySelectorAll('.flip-envelope').forEach(env => {
   env.addEventListener('click', () => {
@@ -791,17 +768,7 @@ document.querySelectorAll('.flip-envelope').forEach(env => {
 
 
 /* ════════════════════════════════════════
-   LETTER BOOK — 3-page page-turn
-   Page model:
-     Page 1 front = letter-1.jpg   (page 1 of reading)
-     Page 1 back  = letter-2.jpg   (page 2 of reading — revealed when leaf turns)
-     Page 2 front = letter-3.jpg   (page 3 of reading — visible once page 1 turns)
-     Page 2 back  = blank
-
-   State machine:
-     view=1 → show page 1 front  (reading page 1)
-     view=2 → turn page1 leaf → show page 1 back  (reading page 2)
-     view=3 → turn page2 leaf (z-index swap) → show page 2 front  (reading page 3)
+   LETTER BOOK 
 ════════════════════════════════════════ */
 (function () {
   const page1   = document.getElementById('letterPage1');
