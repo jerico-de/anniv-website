@@ -953,7 +953,6 @@ body { overflow-x: hidden; }
 /* ══════════════════════════════════════
    LOVE NOTES — Block headers (Shan / Jigs divider)
 ══════════════════════════════════════ */
-.love-notes-block { }
 .love-notes-block-header {
   display: flex;
   align-items: center;
@@ -2114,4 +2113,513 @@ body { overflow-x: hidden; }
     font-size: .52rem;
     letter-spacing: .18em;
   }
+}
+
+/* ════════════════════════════════════════
+   HOW WE CELEBRATED — Film Strip CSS
+   Add this block to your styles.css.
+   Search for the old filmroll-wrap block
+   and REPLACE it entirely with this.
+════════════════════════════════════════ */
+ 
+/* ── Reel wrapper ── */
+.reel-wrap {
+  width: calc(100% + 2rem);
+  margin-left: -1rem;
+  background: #0a0806;
+  border-top: 2px solid rgba(255,255,255,.05);
+  border-bottom: 2px solid rgba(255,255,255,.05);
+  position: relative;
+  margin-bottom: 0;
+}
+ 
+/* ── Sprocket rows ── */
+.reel-sprockets {
+  display: flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 6px;
+  gap: 0;
+  overflow: hidden;
+  background: #080604;
+}
+.reel-sprocket-hole {
+  width: 13px;
+  height: 9px;
+  background: #1a1815;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 2px;
+  flex-shrink: 0;
+  margin-right: 20px;
+}
+ 
+/* ── Scroll strip ── */
+.reel-strip-outer {
+  position: relative;
+}
+.reel-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  cursor: grab;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 10px 1.2rem;
+}
+.reel-scroll::-webkit-scrollbar { display: none; }
+.reel-scroll.grabbing { cursor: grabbing; }
+.reel-inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: max-content;
+}
+ 
+/* ── Day label ── */
+.reel-day-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 156px;
+  padding: 0 1rem;
+  gap: .5rem;
+  flex-shrink: 0;
+}
+.reel-day-line {
+  flex: 1;
+  width: 1px;
+  background: rgba(201,168,76,.2);
+}
+.reel-day-text {
+  font-family: 'Caveat', cursive;
+  font-size: .65rem;
+  letter-spacing: .16em;
+  color: rgba(201,168,76,.55);
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  white-space: nowrap;
+}
+ 
+/* ── Individual frame ── */
+.reel-frame {
+  flex-shrink: 0;
+  width: 210px;
+  background: #151210;
+  border: 1px solid rgba(255,255,255,.07);
+  cursor: pointer;
+  position: relative;
+  transition: border-color .25s, transform .22s, box-shadow .25s;
+  overflow: hidden;
+}
+.reel-frame:hover {
+  border-color: rgba(201,168,76,.4);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(0,0,0,.55);
+}
+.reel-frame.reel-frame-active {
+  border-color: var(--rose);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 36px rgba(0,0,0,.6);
+}
+.reel-frame.reel-frame-gift {
+  border-color: rgba(212,128,138,.18);
+}
+.reel-frame.reel-frame-gift:hover {
+  border-color: rgba(212,128,138,.45);
+}
+.reel-frame.reel-frame-gift.reel-frame-active {
+  border-color: var(--rose-light);
+}
+ 
+/* Frame photo area */
+.reel-frame-photos {
+  width: 100%;
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  position: relative;
+  background: #0d0b08;
+  display: block;
+}
+.reel-frame-photos img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: brightness(.78) sepia(.08);
+  transition: filter .35s;
+}
+.reel-frame.reel-frame-active .reel-frame-photos img {
+  filter: brightness(.92) sepia(0);
+}
+.reel-frame-photos .reel-ph {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Caveat', cursive;
+  font-size: .6rem;
+  letter-spacing: .1em;
+  color: rgba(201,168,76,.2);
+  text-align: center;
+  padding: .5rem;
+}
+ 
+/* Multi-photo contact sheet */
+.reel-frame-multi {
+  display: flex !important;
+  gap: 2px;
+}
+.reel-multi-slot {
+  flex: 1;
+  background: #0d0b08;
+  overflow: hidden;
+  position: relative;
+  aspect-ratio: unset;
+}
+.reel-multi-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: brightness(.75) sepia(.1);
+}
+ 
+/* Frame bottom bar */
+.reel-frame-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .42rem .6rem;
+  background: #0f0d0a;
+  border-top: 1px solid rgba(255,255,255,.04);
+}
+.reel-frame-num {
+  font-family: 'Caveat', cursive;
+  font-size: .62rem;
+  letter-spacing: .14em;
+  color: rgba(201,168,76,.45);
+  flex-shrink: 0;
+}
+.reel-frame-title {
+  font-family: 'Caveat', cursive;
+  font-size: .68rem;
+  color: rgba(253,246,238,.5);
+  letter-spacing: .04em;
+  flex: 1;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 .4rem;
+}
+.reel-frame-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(201,168,76,.18);
+  flex-shrink: 0;
+  transition: background .3s;
+}
+.reel-frame.reel-frame-active .reel-frame-dot {
+  background: var(--rose);
+}
+.reel-frame.reel-frame-gift .reel-frame-dot {
+  background: rgba(212,128,138,.28);
+}
+.reel-frame.reel-frame-gift.reel-frame-active .reel-frame-dot {
+  background: var(--rose-light);
+}
+ 
+/* ── Wax seal overlay on gift frame ── */
+.reel-wax-overlay {
+  position: absolute;
+  inset: 0;
+  bottom: 28px; /* above the bar */
+  background: rgba(8,4,6,.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
+  z-index: 5;
+  transition: opacity .4s ease;
+}
+.reel-wax-overlay.broken {
+  opacity: 0;
+  pointer-events: none;
+}
+.reel-wax-seal {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 34%, #c05060, #7a1530);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 18px rgba(160,50,70,.5), inset 0 2px 4px rgba(255,255,255,.13);
+  cursor: pointer;
+  transition: transform .22s, box-shadow .22s;
+  position: relative;
+}
+.reel-wax-seal:hover {
+  transform: scale(1.09) rotate(-4deg);
+  box-shadow: 0 8px 26px rgba(160,50,70,.65), inset 0 2px 4px rgba(255,255,255,.13);
+}
+.reel-wax-ring {
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.17);
+  pointer-events: none;
+}
+.reel-wax-text {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: .82rem;
+  color: rgba(255,255,255,.9);
+  letter-spacing: .05em;
+  position: relative;
+  z-index: 1;
+}
+.reel-wax-hint {
+  font-family: 'Caveat', cursive;
+  font-size: .6rem;
+  letter-spacing: .12em;
+  color: rgba(201,168,76,.45);
+  text-transform: uppercase;
+}
+ 
+/* ── Left/right scroll arrows ── */
+.reel-arr {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(201,168,76,.25);
+  background: rgba(8,6,4,.85);
+  color: rgba(201,168,76,.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .2s, opacity .3s, color .2s;
+  backdrop-filter: blur(4px);
+}
+.reel-arr:hover {
+  background: rgba(201,168,76,.15);
+  color: #fdf6ee;
+}
+.reel-arr.hide { opacity: 0; pointer-events: none; }
+.reel-arr-l { left: .5rem; }
+.reel-arr-r { right: .5rem; }
+ 
+/* ── Expanded panel ── */
+.reel-expanded {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .65s cubic-bezier(.77,0,.18,1);
+  background: #0c0a08;
+  border-top: 1px solid rgba(201,168,76,.07);
+}
+.reel-expanded.open {
+  max-height: 640px;
+}
+.reel-expanded-inner {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2.2rem 2rem 2.8rem;
+  gap: 2.8rem;
+  align-items: start;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity .4s ease .18s, transform .4s ease .18s;
+  position: relative;
+}
+.reel-expanded.open .reel-expanded-inner {
+  opacity: 1;
+  transform: translateY(0);
+}
+ 
+/* Photo column */
+.rex-main-photo {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: #0d0b08;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(255,255,255,.06);
+}
+.rex-main-photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0;
+  transition: opacity .38s ease;
+}
+.rex-main-photo img.rex-active {
+  opacity: 1;
+}
+.rex-thumbs {
+  display: flex;
+  gap: 5px;
+  margin-top: 5px;
+}
+.rex-thumb {
+  width: 56px;
+  height: 40px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,.07);
+  flex-shrink: 0;
+  opacity: .5;
+  transition: opacity .2s, border-color .2s;
+  background: #0d0b08;
+}
+.rex-thumb:hover { opacity: .8; }
+.rex-thumb.rex-thumb-active {
+  opacity: 1;
+  border-color: rgba(201,168,76,.5);
+}
+.rex-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+ 
+/* Text column */
+.rex-text-col {
+  display: flex;
+  flex-direction: column;
+  gap: .7rem;
+  padding-top: .2rem;
+}
+.rex-chapter {
+  font-family: 'Caveat', cursive;
+  font-size: .72rem;
+  letter-spacing: .16em;
+  color: var(--gold);
+  text-transform: uppercase;
+  opacity: .85;
+}
+.rex-date {
+  font-family: 'Caveat', cursive;
+  font-size: .72rem;
+  color: var(--rose-light);
+  letter-spacing: .1em;
+  opacity: .75;
+}
+.rex-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+  font-weight: 400;
+  color: var(--cream);
+  line-height: 1.15;
+}
+.rex-ring-note {
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+  border-left: 2px solid var(--gold);
+  padding: .55rem .9rem;
+  background: rgba(201,168,76,.05);
+}
+.rex-ring-note p {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: .82rem;
+  line-height: 1.72;
+  color: var(--gold-light);
+}
+.rex-body {
+  font-family: 'Lora', serif;
+  font-size: .88rem;
+  line-height: 1.88;
+  color: #b8a898;
+}
+.rex-note {
+  font-family: 'Caveat', cursive;
+  font-size: .92rem;
+  color: var(--rose-dark);
+  opacity: .85;
+}
+.rex-vid-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  border: 1px solid rgba(212,128,138,.3);
+  color: var(--rose-light);
+  font-family: 'Caveat', cursive;
+  font-size: .82rem;
+  letter-spacing: .08em;
+  padding: .4rem .9rem;
+  background: transparent;
+  cursor: pointer;
+  transition: background .2s, border-color .2s;
+  margin-top: .2rem;
+  width: fit-content;
+}
+.rex-vid-btn:hover {
+  background: rgba(212,128,138,.1);
+  border-color: var(--rose);
+}
+.rex-vid-btn svg {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+}
+ 
+/* Close button */
+.rex-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.04);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .2s, color .2s;
+}
+.rex-close:hover {
+  background: rgba(212,128,138,.15);
+  color: var(--cream);
+}
+ 
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  .reel-frame { width: 165px; }
+  .reel-expanded.open { max-height: 900px; }
+  .reel-expanded-inner {
+    grid-template-columns: 1fr;
+    gap: 1.4rem;
+    padding: 1.4rem 1rem 2rem;
+  }
+  .rex-thumb { width: 46px; height: 34px; }
+}
+ 
+/* Wax seal crack animation */
+@keyframes reelSealCrack {
+  0%   { transform: scale(1)    rotate(0deg); }
+  20%  { transform: scale(1.09) rotate(-6deg); }
+  40%  { transform: scale(.88)  rotate(4deg); }
+  60%  { transform: scale(1.04) rotate(-2deg); }
+  80%  { transform: scale(.96)  rotate(1deg); }
+  100% { transform: scale(0)    rotate(12deg); opacity: 0; }
 }

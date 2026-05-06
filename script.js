@@ -530,9 +530,7 @@ if (noteImg && notePh) {
 (function () {
   const SONGS = [
     { title: "Can't Help Falling in Love", artist: 'Kiana Ledé',    src: 'assets/cant-help-falling.mp3', duration: '3:22' },
-    { title: 'Love Is A Stillness',        artist: 'Sam Smith',      src: 'assets/love-is-a-stillness.mp3', duration: '1:54' },
     { title: 'Ito Lamang',                 artist: 'Project Romeo',  src: 'assets/ito-lamang.mp3',         duration: '3:19' },
-    { title: 'Pinipili',                   artist: 'Mateo',          src: 'assets/pinipili.mp3',           duration: '3:00' },
   ];
   const DEFAULT_VOLUME = 0.2;
   const SESSION_KEY    = 'jsShanMusicPlayed'; // set on first play attempt
@@ -1603,4 +1601,222 @@ document.querySelectorAll('.flip-envelope').forEach(env => {
   if (counter) counter.textContent = `Page 1 of ${TOTAL}`;
   if (prevBtn) prevBtn.disabled = true;
   if (nextBtn) nextBtn.disabled = TOTAL <= 1;
+})();
+
+/* ══════════════════════════════════════
+   FILM ROLL — Accordion scenes
+══════════════════════════════════════ */
+(function () {
+ 
+  /* ── Build sprocket holes ── */
+  function buildSprockets(elId) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    for (let i = 0; i < 34; i++) {
+      const h = document.createElement('div');
+      h.className = 'reel-sprocket-hole';
+      el.appendChild(h);
+    }
+  }
+  buildSprockets('reelSprockTop');
+  buildSprockets('reelSprockBot');
+ 
+  /* ── Drag-to-scroll on the strip ── */
+  const scrollEl = document.getElementById('reelScroll');
+  if (scrollEl) {
+    let isDown = false, startX = 0, scrollLeft = 0;
+    scrollEl.addEventListener('mousedown', e => {
+      isDown = true;
+      scrollEl.classList.add('grabbing');
+      startX = e.pageX - scrollEl.offsetLeft;
+      scrollLeft = scrollEl.scrollLeft;
+    });
+    scrollEl.addEventListener('mouseleave', () => { isDown = false; scrollEl.classList.remove('grabbing'); });
+    scrollEl.addEventListener('mouseup',    () => { isDown = false; scrollEl.classList.remove('grabbing'); });
+    scrollEl.addEventListener('mousemove',  e => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - scrollEl.offsetLeft;
+      scrollEl.scrollLeft = scrollLeft - (x - startX) * 1.25;
+    });
+ 
+    /* Touch swipe */
+    let tx = 0;
+    scrollEl.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+    scrollEl.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - tx;
+      if (Math.abs(dx) > 10) scrollEl.scrollLeft -= dx * 0.8;
+    });
+  }
+ 
+  /* ── Arrow buttons ── */
+  const arrL = document.getElementById('reelArrL');
+  const arrR = document.getElementById('reelArrR');
+  function updateArrows() {
+    if (!arrL || !arrR || !scrollEl) return;
+    arrL.classList.toggle('hide', scrollEl.scrollLeft < 20);
+    arrR.classList.toggle('hide', scrollEl.scrollLeft + scrollEl.clientWidth >= scrollEl.scrollWidth - 20);
+  }
+  if (arrL) arrL.addEventListener('click', () => scrollEl.scrollBy({ left: -270, behavior: 'smooth' }));
+  if (arrR) arrR.addEventListener('click', () => scrollEl.scrollBy({ left:  270, behavior: 'smooth' }));
+  if (scrollEl) scrollEl.addEventListener('scroll', updateArrows, { passive: true });
+  updateArrows();
+ 
+  /* ── Expanded panel elements ── */
+  const panel       = document.getElementById('reelExpanded');
+  const mainPhoto   = document.getElementById('rexMainPhoto');
+  const thumbsEl    = document.getElementById('rexThumbs');
+  const textCol     = document.getElementById('rexTextCol');
+  const closeBtn    = document.getElementById('rexClose');
+ 
+  let activeFrameId = null;
+  let sealBroken    = false;
+ 
+  /* ── Render expanded panel ── */
+  function renderPanel(frame) {
+    const d = frame.dataset;
+    let photos = [];
+    try { photos = JSON.parse(d.photos || '[]'); } catch(e) {}
+    photos = photos.filter(Boolean);
+ 
+    /* Main photo area */
+    mainPhoto.innerHTML = photos.map((src, i) =>
+      `<img src="${src}" alt="" loading="lazy" class="${i === 0 ? 'rex-active' : ''}">`
+    ).join('');
+ 
+    /* Thumbnails — always show if more than 1 photo */
+    thumbsEl.innerHTML = '';
+    if (photos.length > 1) {
+      photos.forEach((src, i) => {
+        const t = document.createElement('div');
+        t.className = 'rex-thumb' + (i === 0 ? ' rex-thumb-active' : '');
+        t.innerHTML = `<img src="${src}" alt="" loading="lazy">`;
+        t.addEventListener('click', () => setActivePhoto(i));
+        thumbsEl.appendChild(t);
+      });
+    }
+ 
+    /* Text content */
+    let html = `
+      <span class="rex-chapter">${d.chapter || ''}</span>
+      <span class="rex-date">${d.date || ''}</span>
+      <h3 class="rex-title">${d.title || ''}</h3>`;
+ 
+    if (d.gift === 'true') {
+      html += `<div class="rex-ring-note"><p>💍 She always wanted to receive a ring. So I gave her one.</p></div>`;
+    }
+ 
+    html += `<p class="rex-body">${d.body || ''}</p>
+      <p class="rex-note">${d.note || ''}</p>`;
+ 
+    /* Watch the moment button — always shown if data-video exists */
+    if (d.video) {
+      html += `<button class="rex-vid-btn" data-video="${d.video}">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/></svg>
+        Watch the moment
+      </button>`;
+    }
+ 
+    textCol.innerHTML = html;
+ 
+    /* Wire video button to existing openVideoModal function */
+    const vBtn = textCol.querySelector('.rex-vid-btn');
+    if (vBtn) {
+      vBtn.addEventListener('click', () => {
+        if (typeof openVideoModal === 'function') {
+          openVideoModal(vBtn.dataset.video);
+        }
+      });
+    }
+  }
+ 
+  function setActivePhoto(i) {
+    const imgs   = mainPhoto.querySelectorAll('img');
+    const thumbs = thumbsEl.querySelectorAll('.rex-thumb');
+    imgs.forEach((img, j)    => img.classList.toggle('rex-active', j === i));
+    thumbs.forEach((thumb, j) => thumb.classList.toggle('rex-thumb-active', j === i));
+  }
+ 
+  /* ── Open / close panel ── */
+  function openPanel(frame) {
+    renderPanel(frame);
+    panel.classList.add('open');
+    /* Scroll frame into view on the strip */
+    setTimeout(() => {
+      frame.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }, 60);
+    /* Scroll page so expanded panel is visible */
+    setTimeout(() => {
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 180);
+  }
+ 
+  function closePanel() {
+    panel.classList.remove('open');
+    if (activeFrameId) {
+      const old = document.getElementById('reelFrame' + activeFrameId);
+      if (old) old.classList.remove('reel-frame-active');
+      activeFrameId = null;
+    }
+  }
+ 
+  if (closeBtn) closeBtn.addEventListener('click', closePanel);
+ 
+  /* ── Wire frame clicks ── */
+  document.querySelectorAll('.reel-frame').forEach(frame => {
+    frame.addEventListener('click', e => {
+      /* Don't fire if clicking wax seal */
+      if (e.target.closest('.reel-wax-overlay')) return;
+ 
+      const id = frame.dataset.id;
+ 
+      /* Gift frame locked until seal broken */
+      if (frame.dataset.gift === 'true' && !sealBroken) return;
+ 
+      /* Same frame — toggle closed */
+      if (activeFrameId === id) {
+        closePanel();
+        return;
+      }
+ 
+      /* Deactivate previous */
+      if (activeFrameId) {
+        const old = document.getElementById('reelFrame' + activeFrameId);
+        if (old) old.classList.remove('reel-frame-active');
+      }
+ 
+      frame.classList.add('reel-frame-active');
+      activeFrameId = id;
+      openPanel(frame);
+    });
+  });
+ 
+  /* ── Wax seal break ── */
+  const waxSeal    = document.getElementById('reelWaxSeal');
+  const waxOverlay = document.getElementById('reelWaxOverlay');
+  if (waxSeal && waxOverlay) {
+    waxSeal.addEventListener('click', e => {
+      e.stopPropagation();
+      if (sealBroken) return;
+      waxSeal.style.animation = 'reelSealCrack .42s cubic-bezier(.36,.07,.19,.97) forwards';
+      setTimeout(() => {
+        waxOverlay.classList.add('broken');
+        sealBroken = true;
+      }, 400);
+    });
+  }
+ 
+  /* ── Note card flip ── */
+  const noteCard = document.getElementById('celebNoteCard');
+  if (noteCard) {
+    noteCard.addEventListener('click', () => noteCard.classList.toggle('flipped'));
+  }
+ 
+  /* ── Compiled video play button ── */
+  document.querySelectorAll('.celeb-video-play-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (typeof openVideoModal === 'function') openVideoModal(btn.dataset.video);
+    });
+  });
+ 
 })();
