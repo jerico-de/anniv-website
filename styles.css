@@ -1379,20 +1379,67 @@ body {
   align-items: start;
 }
 .flip-card { perspective: 1000px; cursor: pointer; }
-.flip-card:nth-child(odd)  { transform: rotate(-2.2deg); }
-.flip-card:nth-child(even) { transform: rotate(1.8deg); }
-.flip-card:nth-child(3n)   { transform: rotate(-.8deg); }
+.flip-card:nth-child(odd) .flip-card-inner {
+  --card-tilt: -2.2deg;
+}
+
+.flip-card:nth-child(even) .flip-card-inner {
+  --card-tilt: 1.8deg;
+}
+
+.flip-card:nth-child(3n) .flip-card-inner {
+  --card-tilt: -.8deg;
+}
+
+/* Desktop hover flip — only on true hover devices */
+@media (hover: hover) and (pointer: fine) {
+  .flip-card:hover {
+    z-index: 2;
+  }
+
+  .flip-card:hover .flip-card-inner {
+    transform:
+      rotate(var(--card-tilt, 0deg))
+      rotateY(180deg);
+
+    box-shadow: 8px 14px 40px rgba(0,0,0,.65);
+  }
+}
+
+/* Mobile tap flip */
+.flip-card.flipped .flip-card-inner {
+  transform:
+    rotate(var(--card-tilt, 0deg))
+    rotateY(180deg);
+
+  box-shadow: 8px 14px 40px rgba(0,0,0,.65);
+}
+
+/* JS-driven flip — works on all devices */
+.flip-card.flipped .flip-card-inner { transform: rotateY(180deg) !important; box-shadow: 8px 14px 40px rgba(0,0,0,.65); }
+
 .flip-card-inner {
-  position: relative; width: 100%;
+   position: relative;
+  width: 100%;
+
   transform-style: preserve-3d;
-  transition: transform .6s cubic-bezier(.4,.2,.2,1), box-shadow .3s;
+
+  /* initial tilt */
+  transform: rotate(var(--card-tilt, 0deg)) rotateY(0deg);
+
+  transition:
+    transform .6s cubic-bezier(.4,.2,.2,1),
+    box-shadow .3s;
+
   box-shadow: 4px 6px 24px rgba(0,0,0,.55);
+
+  will-change: transform;
 }
-@media (hover: hover) {
-  .flip-card:hover { z-index: 2; }
-  .flip-card:hover .flip-card-inner { transform: rotateY(180deg); box-shadow: 8px 14px 40px rgba(0,0,0,.65); }
+
+.flip-card {
+  perspective: 1000px;
+  transform-style: preserve-3d;
 }
-.flip-card.flipped .flip-card-inner { transform: rotateY(180deg); box-shadow: 8px 14px 40px rgba(0,0,0,.65); }
 
 .flip-front {
   background: #1a1815;
@@ -1468,6 +1515,26 @@ body {
 .modal-text { padding: 1.4rem 1.6rem 1.8rem; display: flex; flex-direction: column; gap: .7rem; border-top: 1px solid rgba(201,168,76,.14); }
 .modal-caption { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 400; color: var(--cream); }
 .modal-story { font-family: 'Lora', serif; font-style: italic; font-size: .9rem; line-height: 1.8; color: #b8a898; }
+
+.img-lightbox-caption {
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.img-lightbox-caption strong {
+  font-size: 1rem;
+  color: var(--cream);
+  font-weight: 600;
+}
+
+.img-lightbox-caption span {
+  font-size: .9rem;
+  line-height: 1.7;
+  color: #c8b09a;
+}
 
 /* ════════════════════════════════════════
    FUTURE PLANS
@@ -1930,7 +1997,7 @@ body {
   border: 1px solid rgba(201,168,76,.1);
   border-top: none;
   padding: 1.2rem 1.2rem 1.4rem;
-  animation: fadeUp .4s ease both;
+  transition: opacity .35s ease;
 }
 .proj-mobile-text-card .proj-date { font-family: 'Caveat', cursive; font-size: .82rem; color: var(--gold); letter-spacing: .12em; opacity: .85; display: block; margin-bottom: .2rem; }
 .proj-mobile-text-card .proj-title { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 400; color: var(--cream); line-height: 1.2; margin-bottom: .5rem; }
@@ -1948,69 +2015,12 @@ body {
 }
 .proj-mobile-text-card .proj-video-btn:hover { background: rgba(212,128,138,.1); border-color: var(--rose); }
 
-/* ════════════════════════════════════════
-   OUR MEMORIES — Touch caption overlay
-   Shown when a card is tapped (.flipped)
-   on touch devices instead of hover text.
-════════════════════════════════════════ */
-.flip-card-touch-caption {
-  position: absolute;
-  bottom: 6px; left: 6px; right: 6px;
-  background: rgba(10,8,6,.82);
-  border-top: 1px solid rgba(201,168,76,.2);
-  padding: .45rem .6rem .4rem;
-  pointer-events: none;
-  opacity: 0;
-  transform: translateY(4px);
-  transition: opacity .25s ease, transform .25s ease;
-  z-index: 4;
-  backdrop-filter: blur(4px);
-}
-.flip-card-touch-caption span {
-  font-family: 'Caveat', cursive;
-  font-size: .82rem;
-  color: var(--gold-light);
-  letter-spacing: .04em;
-  display: block;
-  text-align: center;
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.flip-front,
-.flip-back {
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
-.flip-back {
-  pointer-events: none;
-}
-
-.flip-card.show-story .flip-back {
-  pointer-events: auto;
-}
-
-.flip-card.show-story .flip-card-inner {
-  transform: rotateY(180deg);
-}
-
-.flip-card-inner {
-  transition: transform 0.6s ease;
-  transform-style: preserve-3d;
-}
-
-/* Show caption when card is tapped (flipped state on touch) */
+/* Touch devices: disable CSS hover-flip entirely.
+   .flipped class (JS-driven) still works via the !important rule above. */
 @media (hover: none) {
-  .flip-card.show-story .flip-card-inner {
-    transform: rotateY(180deg);
-  }
-
-  .flip-card.show-story .flip-card-touch-caption {
-    opacity: 1;
-    transform: translateY(0);
+  .flip-card:hover .flip-card-inner {
+    transform: none !important;
+    box-shadow: 4px 6px 24px rgba(0,0,0,.55);
   }
 }
 

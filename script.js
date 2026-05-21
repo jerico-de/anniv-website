@@ -1,9 +1,4 @@
 /* ════════════════════════════════════════
-   Jigs & Shan · 1st Anniversary
-   script.js — clean, deduplicated
-════════════════════════════════════════ */
-
-/* ════════════════════════════════════════
    CLUSTER CAROUSELS — How We Met
 ════════════════════════════════════════ */
 function makeClusterCarousel(el) {
@@ -140,28 +135,48 @@ document.querySelectorAll('.cluster-carousel').forEach(makeClusterCarousel);
   let ppcTimers   = [];
   const FADE_MS   = 550;
 
-  /* ── Mobile select: inject above the scene ── */
+  function isMobile() { return window.innerWidth <= 680; }
+
+  /* ── Inject mobile select ABOVE the proj-scene ── */
+  const projScene = section.querySelector('.proj-scene');
+
   const mobileSelectWrap = document.createElement('div');
   mobileSelectWrap.className = 'proj-tl-mobile-select';
   mobileSelectWrap.innerHTML = `
     <span class="proj-tl-mobile-select-label">✦ choose a moment</span>
     <select id="projMobileSelect">
       ${Array.from(nodes).map((n, i) =>
-        `<option value="${i}">${n.dataset.date || ''} — ${n.dataset.title || ''}</option>`
+        `<option value="${i}">${n.dataset.date || 'Moment ' + (i+1)} — ${n.dataset.title || ''}</option>`
       ).join('')}
     </select>`;
-  const projScene = section.querySelector('.proj-scene');
-  if (projScene) projScene.parentNode.insertBefore(mobileSelectWrap, projScene);
 
-  /* ── Mobile text card: inject below the scene ── */
+  if (projScene) {
+    projScene.parentNode.insertBefore(mobileSelectWrap, projScene);
+  }
+
+  /* ── Inject mobile text card BELOW the proj-scene ── */
   const mobileCard = document.createElement('div');
   mobileCard.className = 'proj-mobile-text-card';
   mobileCard.id = 'projMobileTextCard';
-  if (projScene) projScene.parentNode.insertBefore(mobileCard, projScene.nextSibling);
+
+  if (projScene && projScene.nextSibling) {
+    projScene.parentNode.insertBefore(mobileCard, projScene.nextSibling);
+  } else if (projScene) {
+    projScene.parentNode.appendChild(mobileCard);
+  }
+
+  /* Force display based on viewport — overrides CSS specificity issues */
+  function syncMobileDisplay() {
+    const mobile = isMobile();
+    mobileSelectWrap.style.display = mobile ? 'block' : 'none';
+    mobileCard.style.display       = mobile ? 'block' : 'none';
+    const strip = section.querySelector('.proj-timeline-strip');
+    if (strip) strip.style.display = mobile ? 'none' : 'block';
+  }
+  syncMobileDisplay();
+  window.addEventListener('resize', syncMobileDisplay);
 
   const mobileSelect = document.getElementById('projMobileSelect');
-
-  function isMobile() { return window.innerWidth <= 680; }
 
   /* ── Photo HTML builder ── */
   function buildPhotoHTML(node) {
@@ -209,7 +224,7 @@ document.querySelectorAll('.cluster-carousel').forEach(makeClusterCarousel);
     dots.forEach(d => d.addEventListener('click', e => { e.stopPropagation(); go(+d.dataset.i); }));
   }
 
-  /* ── Build scene panel (photo + desktop text) ── */
+  /* ── Build scene panel (photo + desktop text inside) ── */
   function buildPanel(node) {
     const videoSrc = (node.dataset.video || '').trim();
     const vBtn = videoSrc
@@ -228,19 +243,30 @@ document.querySelectorAll('.cluster-carousel').forEach(makeClusterCarousel);
     return panel;
   }
 
-  /* ── Update mobile text card ── */
+  /* ── Update mobile text card below scene ── */
   function updateMobileCard(node) {
     const videoSrc = (node.dataset.video || '').trim();
     const vBtn = videoSrc
-      ? `<button class="proj-video-btn" data-video="${videoSrc}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/></svg> Watch the video</button>` : '';
-    mobileCard.innerHTML = `
-      <span class="proj-date">${node.dataset.date || ''}</span>
-      <h3 class="proj-title">${node.dataset.title || ''}</h3>
-      <p class="proj-body">${node.dataset.body || ''}</p>
-      <p class="proj-note">${node.dataset.note || ''}</p>
-      ${vBtn}`;
-    const vBtnEl = mobileCard.querySelector('.proj-video-btn');
-    if (vBtnEl) vBtnEl.addEventListener('click', () => openVideoModal(vBtnEl.dataset.video));
+      ? `<button class="proj-video-btn" data-video="${videoSrc}">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/></svg>
+          Watch the video
+        </button>` : '';
+
+    /* Fade out → update → fade in */
+    mobileCard.style.opacity = '0';
+    setTimeout(() => {
+      mobileCard.innerHTML = `
+        <span class="proj-date">${node.dataset.date || ''}</span>
+        <h3 class="proj-title">${node.dataset.title || ''}</h3>
+        <p class="proj-body">${node.dataset.body || ''}</p>
+        <p class="proj-note">${node.dataset.note || ''}</p>
+        ${vBtn}`;
+
+      const vBtnEl = mobileCard.querySelector('.proj-video-btn');
+      if (vBtnEl) vBtnEl.addEventListener('click', () => openVideoModal(vBtnEl.dataset.video));
+
+      mobileCard.style.opacity = '1';
+    }, 180);
   }
 
   function updateRail(i) {
@@ -278,10 +304,12 @@ document.querySelectorAll('.cluster-carousel').forEach(makeClusterCarousel);
     activeIndex = toIndex;
 
     updateRail(toIndex);
+
+    /* Always update mobile card (harmless if hidden) */
     updateMobileCard(nodes[toIndex]);
 
     /* Sync select */
-    if (mobileSelect) mobileSelect.value = toIndex;
+    if (mobileSelect) mobileSelect.value = String(toIndex);
 
     if (navPrev) navPrev.classList.add('visible');
     if (navNext) navNext.classList.add('visible');
@@ -298,10 +326,8 @@ document.querySelectorAll('.cluster-carousel').forEach(makeClusterCarousel);
   if (navPrev) navPrev.addEventListener('click', () => { if (activeIndex > 0) transition(activeIndex - 1); });
   if (navNext) navNext.addEventListener('click', () => { if (activeIndex < nodes.length - 1) transition(activeIndex + 1); });
 
-  /* Mobile: select dropdown */
-  if (mobileSelect) {
-    mobileSelect.addEventListener('change', () => transition(+mobileSelect.value));
-  }
+  /* Mobile select */
+  if (mobileSelect) mobileSelect.addEventListener('change', () => transition(+mobileSelect.value));
 
   /* Keyboard nav */
   document.addEventListener('keydown', e => {
@@ -472,18 +498,41 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeVideoMo
       .filter(img => img.offsetParent !== null && img.src && !img.src.endsWith('#'));
   }
 
-  function openLightbox(src, alt, gallery, idx) {
-    lbImg.src = src;
-    lbImg.alt = alt || '';
-    lbCap.textContent = alt || '';
-    galleryImages = gallery || [];
-    galleryIdx    = idx ?? -1;
-    const multi = galleryImages.length > 1;
-    lbPrev.classList.toggle('hidden', !multi || galleryIdx <= 0);
-    lbNext.classList.toggle('hidden', !multi || galleryIdx >= galleryImages.length - 1);
-    lb.classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
+  function openLightbox(src, data, gallery, idx) {
+    const caption = typeof data === 'object'
+    ? data.caption || ''
+    : data || '';
+
+  const story = typeof data === 'object'
+    ? data.story || ''
+    : '';
+
+  lbImg.src = src;
+  lbImg.alt = caption;
+
+  lbCap.innerHTML = `
+    ${caption ? `<strong>${caption}</strong>` : ''}
+    ${story ? `<span>${story}</span>` : ''}
+  `;
+
+  galleryImages = gallery || [];
+  galleryIdx = idx ?? -1;
+
+  const multi = galleryImages.length > 1;
+
+  lbPrev.classList.toggle(
+    'hidden',
+    !multi || galleryIdx <= 0
+  );
+
+  lbNext.classList.toggle(
+    'hidden',
+    !multi || galleryIdx >= galleryImages.length - 1
+  );
+
+  lb.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
 
   function closeLightbox() {
     lb.classList.remove('open');
@@ -493,18 +542,44 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeVideoMo
 
   function navigateLightbox(dir) {
     const newIdx = galleryIdx + dir;
-    if (newIdx < 0 || newIdx >= galleryImages.length) return;
-    const img = galleryImages[newIdx];
-    const alt = img.closest('.flip-card')?.dataset.caption
-             || img.closest('[data-story]')?.dataset.caption
-             || img.alt || '';
-    galleryIdx = newIdx;
-    lbImg.src = img.src;
-    lbImg.alt = alt;
-    lbCap.textContent = alt;
-    lbPrev.classList.toggle('hidden', galleryIdx <= 0);
-    lbNext.classList.toggle('hidden', galleryIdx >= galleryImages.length - 1);
-  }
+
+  if (newIdx < 0 || newIdx >= galleryImages.length) return;
+
+  const img = galleryImages[newIdx];
+
+  const card = img.closest('.flip-card');
+
+  const caption =
+    card?.dataset.caption ||
+    img.closest('[data-caption]')?.dataset.caption ||
+    img.alt ||
+    '';
+
+  const story =
+    card?.dataset.story ||
+    img.closest('[data-story]')?.dataset.story ||
+    '';
+
+  galleryIdx = newIdx;
+
+  lbImg.src = img.src;
+  lbImg.alt = caption;
+
+  lbCap.innerHTML = `
+    ${caption ? `<strong>${caption}</strong>` : ''}
+    ${story ? `<span>${story}</span>` : ''}
+  `;
+
+  lbPrev.classList.toggle(
+    'hidden',
+    galleryIdx <= 0
+  );
+
+  lbNext.classList.toggle(
+    'hidden',
+    galleryIdx >= galleryImages.length - 1
+  );
+}
 
   lbClose.addEventListener('click', closeLightbox);
   lbBack.addEventListener('click', closeLightbox);
@@ -524,163 +599,104 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeVideoMo
     if (Math.abs(dx) > 40) navigateLightbox(dx < 0 ? 1 : -1);
   });
 
-  /* Click delegation — attach to images in specific containers */
-  let activeStoryCard = null;
-
-document.addEventListener('click', e => {
-
-  if (e.target.closest('.watch-video-btn, .proj-video-btn')) return;
-
-  const img = e.target.closest('img');
-  if (!img) return;
-
-  const container = img.closest(
-    '.flip-front, .proj-photo-wrap, .ask-photo-inner, .answer-reveal-photo, .lola-note-img-wrap, .letter-page-frame, .plan-hover-img, .mini-photo'
-  );
-
-  if (!container) return;
-
-  const card = img.closest('.flip-card');
-
-  // ─────────────────────────────
-  // FLIP CARD MOBILE BEHAVIOR
-  // ─────────────────────────────
-  if (card) {
-
-    // FIRST TAP
-    if (!card.classList.contains('show-story')) {
-
-      // close ALL flipped cards
-      document.querySelectorAll('.flip-card.show-story')
-        .forEach(c => c.classList.remove('show-story'));
-
-      // open current
-      card.classList.add('show-story');
-      activeStoryCard = card;
-
-      e.preventDefault();
-      e.stopPropagation();
-      return;
-    }
-
-    // SECOND TAP → open lightbox
-
+  /* Click delegation — images outside flip-cards open lightbox directly */
+  document.addEventListener('click', e => {
+    if (e.target.closest('.watch-video-btn, .proj-video-btn')) return;
+    const img = e.target.closest('img');
+    if (!img) return;
+    /* Skip flip-card images — handled by the flip cards IIFE below */
+    if (img.closest('.flip-card')) return;
+    const container = img.closest('.proj-photo-wrap, .ask-photo-inner, .answer-reveal-photo, .lola-note-img-wrap, .letter-page-frame, .plan-hover-img, .mini-photo');
+    if (!container) return;
     const src = img.src;
-
     if (!src || src.endsWith('#') || src === window.location.href) return;
-
-    const alt =
-      card.dataset.caption ||
-      img.alt ||
-      '';
-
+    const alt = img.closest('[data-caption]')?.dataset.caption || img.alt || '';
     const gallery = collectGallery(img);
     const idx = gallery.indexOf(img);
-
     openLightbox(src, alt, gallery, idx);
-
-    // IMPORTANT:
-    // reset card state after modal opens
-    card.classList.remove('show-story');
-    activeStoryCard = null;
-
-    e.preventDefault();
     e.stopPropagation();
-    return;
-  }
-
-  // ─────────────────────────────
-  // NORMAL LIGHTBOX (other sections)
-  // ─────────────────────────────
-  const src = img.src;
-
-  if (!src || src.endsWith('#') || src === window.location.href) return;
-
-  const alt =
-    img.closest('[data-story]')?.dataset.caption ||
-    img.alt ||
-    '';
-
-  const gallery = collectGallery(img);
-  const idx = gallery.indexOf(img);
-
-  openLightbox(src, alt, gallery, idx);
-
-  e.preventDefault();
-  e.stopPropagation();
-
-}, true);
+  }, true);
 
   window.openImgLightbox = openLightbox;
 })();
 
 
 /* ════════════════════════════════════════
-   FLIP CARDS + GALLERY — event delegation
-   Touch: tap once → show caption overlay (no flip)
-          tap again → open lightbox
-   Desktop (hover): hover flips, click → lightbox
+   FLIP CARDS + GALLERY
 ════════════════════════════════════════ */
 (function () {
-  const folderBody = document.querySelector('.folder-body');
+const folderBody = document.querySelector('.folder-body');
   if (!folderBody) return;
+
   const isTouch = window.matchMedia('(hover: none)').matches;
 
-  /* Inject a caption overlay into every flip-card on touch devices */
-  if (isTouch) {
-    document.querySelectorAll('.flip-card').forEach(card => {
-      const caption = card.dataset.caption || '';
-      if (!caption) return;
-      /* Avoid double-injection */
-      if (card.querySelector('.flip-card-touch-caption')) return;
-      const cap = document.createElement('div');
-      cap.className = 'flip-card-touch-caption';
-      cap.innerHTML = `<span>${caption}</span>`;
-      /* Insert inside .flip-front so it sits above the image */
-      const front = card.querySelector('.flip-front');
-      if (front) front.appendChild(cap);
-    });
+  function openCardLightbox(card) {
+    const imgEl = card.querySelector('.flip-front img');
+
+    if (!imgEl || !imgEl.src || imgEl.src.endsWith('#')) return;
+
+    const caption =
+      card.dataset.caption ||
+      imgEl.alt ||
+      '';
+
+    const story =
+      card.dataset.story ||
+      '';
+
+    const pane = card.closest('.folder-pane');
+
+    const allImgs = pane
+      ? Array.from(
+          pane.querySelectorAll('.flip-front img[src]')
+        ).filter(i => i.src && !i.src.endsWith('#'))
+      : [imgEl];
+
+    const idx = allImgs.indexOf(imgEl);
+
+    window.openImgLightbox(
+      imgEl.src,
+      {
+        caption,
+        story
+      },
+      allImgs,
+      idx
+    );
   }
 
-  folderBody.addEventListener('click', e => {
-    const card = e.target.closest('.flip-card');
-    if (!card) return;
-
-    if (isTouch) {
-      if (!card.classList.contains('flipped')) {
-        /* First tap: show caption, deselect others in same pane */
-        const pane = card.closest('.folder-pane');
-        if (pane) {
-          pane.querySelectorAll('.flip-card.flipped').forEach(c => {
-            if (c !== card) c.classList.remove('flipped');
-          });
-        }
-        card.classList.add('flipped');
-        e.stopPropagation();
-        return;
-      }
-      /* Second tap: open lightbox */
-    }
-
-    /* Desktop or second touch tap: open lightbox */
-    const imgEl = card.querySelector('.flip-front img');
-    if (!imgEl || !imgEl.src || imgEl.src.endsWith('#')) return;
-    const alt = card.dataset.caption || '';
-    const pane = card.closest('.folder-pane');
-    const allImgs = pane
-      ? Array.from(pane.querySelectorAll('.flip-front img[src]')).filter(i => i.src && !i.src.endsWith('#'))
-      : [imgEl];
-    const idx = allImgs.indexOf(imgEl);
-    window.openImgLightbox(imgEl.src, alt, allImgs, idx);
-  });
-
-  /* Tap outside any card → deselect all (touch only) */
+  /* TOUCH DEVICES ONLY */
   if (isTouch) {
-    folderBody.addEventListener('click', e => {
-      if (!e.target.closest('.flip-card')) {
-        document.querySelectorAll('.flip-card.flipped').forEach(c => c.classList.remove('flipped'));
-      }
-    });
+    folderBody.addEventListener(
+      'click',
+      e => {
+        const card = e.target.closest('.flip-card');
+        if (!card) return;
+
+        openCardLightbox(card);
+
+        e.preventDefault();
+        e.stopPropagation();
+      },
+      true
+    );
+  }
+
+  /* DESKTOP CLICK = OPEN MODAL */
+  else {
+    folderBody.addEventListener(
+      'click',
+      e => {
+        const card = e.target.closest('.flip-card');
+        if (!card) return;
+
+        openCardLightbox(card);
+
+        e.preventDefault();
+        e.stopPropagation();
+      },
+      true
+    );
   }
 })();
 
@@ -691,6 +707,7 @@ document.addEventListener('click', e => {
 document.querySelectorAll('.folder-tab').forEach(tab => {
   tab.addEventListener('click', () => {
     const key = tab.dataset.folder;
+    /* Unflip all cards when switching tabs */
     document.querySelectorAll('.flip-card.flipped').forEach(c => c.classList.remove('flipped'));
     document.querySelectorAll('.folder-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.folder-pane').forEach(p => p.classList.remove('active'));
@@ -705,42 +722,76 @@ document.querySelectorAll('.folder-tab').forEach(tab => {
    MY NOTE QUIZ
 ════════════════════════════════════════ */
 (function () {
-  const quizWrap   = document.getElementById('noteQuizWrap');
-  const letterWrap = document.getElementById('noteLetterWrap');
-  const input      = document.getElementById('noteQuizInput');
-  const submit     = document.getElementById('noteQuizSubmit');
-  const wrongMsg   = document.getElementById('noteQuizWrong');
-  if (!quizWrap || !letterWrap) return;
+  document.querySelectorAll('.note-quiz-wrap').forEach(quizWrap => {
 
-  const CORRECT = ['rewrite the stars'];
+    const input = quizWrap.querySelector('.note-quiz-input');
+    const submit = quizWrap.querySelector('.note-quiz-submit');
+    const wrongMsg = quizWrap.querySelector('.note-quiz-wrong');
 
-  function checkAnswer() {
-    const val = (input ? input.value : '').trim().toLowerCase();
-    if (CORRECT.some(a => val === a)) {
-      quizWrap.style.opacity   = '0';
-      quizWrap.style.transition = 'opacity .4s ease';
-      setTimeout(() => {
-        quizWrap.style.display = 'none';
-        letterWrap.style.display = 'block';
-        letterWrap.classList.add('quiz-revealed');
-        letterWrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 420);
-    } else {
-      wrongMsg.classList.add('show');
-      if (input) {
+    const letterWrap = quizWrap.nextElementSibling;
+
+    if (!input || !submit || !letterWrap) return;
+
+    const answers = (
+      submit.dataset.answer || ''
+    )
+      .split('|')
+      .map(a => a.trim().toLowerCase());
+
+    function unlockLetter() {
+      const val = input.value.trim().toLowerCase();
+
+      if (answers.includes(val)) {
+
+        quizWrap.style.opacity = '0';
+        quizWrap.style.transition = 'opacity .4s ease';
+
+        setTimeout(() => {
+          quizWrap.style.display = 'none';
+
+          letterWrap.style.display = 'block';
+          letterWrap.classList.add('quiz-revealed');
+
+          letterWrap.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+
+        }, 420);
+
+      } else {
+
+        wrongMsg.classList.add('show');
+
         input.style.borderColor = 'var(--rose-dark)';
-        input.animate([
-          { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' },
-          { transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' },
-          { transform: 'translateX(0)' }
-        ], { duration: 380 });
-      }
-      setTimeout(() => { wrongMsg.classList.remove('show'); if (input) input.style.borderColor = ''; }, 1600);
-    }
-  }
 
-  if (submit) submit.addEventListener('click', checkAnswer);
-  if (input)  input.addEventListener('keydown', e => { if (e.key === 'Enter') checkAnswer(); });
+        input.animate([
+          { transform: 'translateX(-5px)' },
+          { transform: 'translateX(5px)' },
+          { transform: 'translateX(-4px)' },
+          { transform: 'translateX(4px)' },
+          { transform: 'translateX(0)' }
+        ], {
+          duration: 380
+        });
+
+        setTimeout(() => {
+          wrongMsg.classList.remove('show');
+          input.style.borderColor = '';
+        }, 1600);
+      }
+    }
+
+    submit.addEventListener('click', unlockLetter);
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        unlockLetter();
+      }
+    });
+
+  });
+
 })();
 
 
@@ -1002,19 +1053,19 @@ document.querySelectorAll('.flip-envelope').forEach(env => {
       <span class="rex-chapter">${d.chapter || ''}</span>
       <span class="rex-date">${d.date || ''}</span>
       <h3 class="rex-title">${d.title || ''}</h3>`;
-    if (d.gift === 'true') {
-      html += `<div class="rex-ring-note"><p>💍 She always wanted to receive a ring. So I gave her one.</p></div>`;
-    }
     html += `<p class="rex-body">${d.body || ''}</p><p class="rex-note">${d.note || ''}</p>`;
+    if (d.gift === 'true') {
+      html += `<div class="rex-ring-note"><p>💍 You've always wanted mabigyan ng ring, I hope you like it hehe.</p></div>`;
+    }
+    if (d.gift === 'true') {
+      html += `<div class="rex-ring-note"><p>👟 I've wanted to receive a pair of shoes. Thank you so much baby hehehe.</p></div>`;
+    }
     html += `<div class="rex-actions">`;
     if (d.video) {
       html += `<button class="rex-vid-btn" data-video="${d.video}">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/></svg>
         Watch the moment</button>`;
     }
-    html += `<button class="rex-expand-btn">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-      View fullscreen</button></div>`;
 
     textCol.innerHTML = html;
 
